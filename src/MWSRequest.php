@@ -26,7 +26,7 @@ class MWSRequest extends AbstractRequest {
 		return $responseXML;
 	}
 
-	public function submitFeed($feedType, $messageType, $messages, $purgeAndReplace = false) {
+	public function submitFeed($feedType, $messageType, $messages, $feedRequest = array()) {
 		$feed = array(
 			'@attributes' => array(
 				'xsi:noNamespaceSchemaLocation' => 'amzn-envelope.xsd',
@@ -43,10 +43,10 @@ class MWSRequest extends AbstractRequest {
 
 		$xml = Array2XML::createXML('AmazonEnvelope', $feed);
 		
-		return $this->submitFeedXML($feedType, $feedXML);
+		return $this->submitFeedXML($feedType, $feedXML, $feedRequest);
 	}
 
-	public function submitFeedXML($feedType, $feedXML, $purgeAndReplace = false) {
+	public function submitFeedXML($feedType, $feedXML, $feedRequest = array()) {
 		$this->log($feedXML->saveXML());
 
 		$feedHandle = @fopen('php://memory', 'rw+');
@@ -58,9 +58,11 @@ class MWSRequest extends AbstractRequest {
 		$request = array(
 			'FeedType' => $feedType,
 			'ContentMd5' => $md5,
-			'PurgeAndReplace' => $purgeAndReplace,
+			'PurgeAndReplace' => false,
 			'FeedContent' => $feedHandle
 		);
+
+		$request = array_merge($request, $feedRequest);
 
 		rewind($feedHandle);
 
