@@ -4,12 +4,6 @@ namespace AmazonMWS;
 use AmazonMWS\exception\InvalidTypeException;
 
 abstract class AbstractRequest {
-	const GET = 'GET';
-	const ADD = 'ADD';
-	const UPDATE = 'POST';
-	const PUT = 'PUT';
-	const DELETE = 'DELETE';
-
 	/**
 	 * <code>
 	 * $config = array(
