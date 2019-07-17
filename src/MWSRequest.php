@@ -11,7 +11,7 @@ class MWSRequest extends AbstractRequest {
 			'ReportId' => $reportId
 		);
 
-		$response = $this->sendRequest('MWS', 'getReport', $reportRequest);
+		$response = $this->request('getReport', $request);
 		
 		rewind($fileHandle);
 		

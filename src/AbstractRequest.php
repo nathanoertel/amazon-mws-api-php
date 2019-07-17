@@ -56,7 +56,7 @@ abstract class AbstractRequest {
 			$request['Merchant'] = $this->config['merchantId'];
 			$request['SellerId'] = $this->config['merchantId'];
 		}
-		if(isset($this->config['authToken'])) $request['MWSAuthToken'] = $this->config['authToken'];
+		if(isset($this->config['authToken']) && !empty($this->config['authToken'])) $request['MWSAuthToken'] = $this->config['authToken'];
 		
 		$clientName = $this->getPath().'_Client';
 
