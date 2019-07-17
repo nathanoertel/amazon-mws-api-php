@@ -43,10 +43,10 @@ abstract class AbstractRequest {
 			throw new \Exception('Configuration missing access key id or secret access key');
 		}
 	
-		$this->config = array_merge_recursive($this->config, $config);
+		$this->config = array_merge($this->config, $config);
 
 		// Apply some defaults.
-		$this->options = array_merge_recursive($this->options, $options);
+		$this->options = array_merge($this->options, $options);
 		
 		$this->logger = $logger;
 	}
@@ -73,7 +73,7 @@ abstract class AbstractRequest {
 			$options,
 			$this->logger
 		);
-		
+
 		try {
 			$response = $service->$method($request);
 			return $response;
@@ -98,7 +98,7 @@ abstract class AbstractRequest {
 		$path = $this->getPath();
 		$clientName = $path.'_Logger_'.$type;
 		$this->requireFile($clientName);
-		$class = new ReflectionClass($clientName);
+		$class = new \ReflectionClass($clientName);
 		if(empty($arguments)) $this->logger = $class->newInstance();
 		else $this->logger = $class->newInstanceArgs($arguments);
 	}
@@ -113,7 +113,7 @@ abstract class AbstractRequest {
 		}
 	}
 
-	private function log($message, $error = false) {
+	protected function log($message, $error = false) {
 		if($this->logger) $this->logger->log($message, $error);
 	}
 }

@@ -19,7 +19,7 @@ class MWSRequest extends AbstractRequest {
 		
 		$this->log($responseStr);
 		
-		$responseXML = new SimpleXMLElement($responseStr);
+		$responseXML = new \SimpleXMLElement($responseStr);
 
 		@fclose($fileHandle);
 
@@ -66,9 +66,11 @@ class MWSRequest extends AbstractRequest {
 
 		rewind($feedHandle);
 
+		$response = $this->request('submitFeed', $request);
+
 		@fclose($feedHandle);
 
-		return $this->request('submitFeed', $request);
+		return $response;
 	}
 
 	public function getFeedSubmissionResult($feedSubmissionId) {
@@ -87,7 +89,7 @@ class MWSRequest extends AbstractRequest {
 		
 		$this->log($responseStr);
 		
-		$responseXML = new SimpleXMLElement($responseStr);
+		$responseXML = new \SimpleXMLElement($responseStr);
 		
 		@fclose($fileHandle);
 
