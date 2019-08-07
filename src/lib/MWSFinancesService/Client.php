@@ -331,7 +331,7 @@ class MWSFinancesService_Client implements MWSFinancesService_Interface
      * <li>MaxErrorRetry</li>
      * </ul>
      */
-    public function __construct($awsAccessKeyId, $awsSecretAccessKey, $applicationName, $applicationVersion, $config = null)
+    public function __construct($awsAccessKeyId, $awsSecretAccessKey, $applicationName, $applicationVersion, $config = null, $logger = null)
     {
 		if (PHP_VERSION_ID < 50600) {
 		    iconv_set_encoding('input_encoding', 'UTF-8');
@@ -345,6 +345,7 @@ class MWSFinancesService_Client implements MWSFinancesService_Interface
         $this->_awsSecretAccessKey = $awsSecretAccessKey;
         if (!is_null($config)) $this->_config = array_merge($this->_config, $config);
         $this->setUserAgentHeader($applicationName, $applicationVersion);
+        $this->logger = $logger;
     }
 
     private function setUserAgentHeader(
@@ -576,6 +577,7 @@ class MWSFinancesService_Client implements MWSFinancesService_Interface
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $allHeadersStr);
+        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
         curl_setopt($ch, CURLOPT_HEADER, true); 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         if ($config['ProxyHost'] != null && $config['ProxyPort'] != -1)
@@ -590,16 +592,34 @@ class MWSFinancesService_Client implements MWSFinancesService_Interface
         $response = "";
         $response = curl_exec($ch);
 
+		$info = curl_getinfo($ch);
+
         if($response === false) {
+			$this->_log($info['url'], true);
+			$this->_log($info['http_code'], true);
+			$this->_log(trim($info['request_header']), true);
+			$this->_log($query, true);
+			$this->_log($response, true);
+
             require_once (dirname(__FILE__) . '/Exception.php');
             $exProps["Message"] = curl_error($ch);
             $exProps["ErrorType"] = "HTTP";
             curl_close($ch);
             throw new MWSFinancesService_Exception($exProps);
+        } else {
+			$this->_log($info['url']);
+			$this->_log($info['http_code']);
+			$this->_log(trim($info['request_header']));
+			$this->_log($query);
+			$this->_log($response);
         }
 
         curl_close($ch);
         return $this->_extractHeadersAndBody($response);
+    }
+    
+    private function _log($message, $error = false) {
+	    if($this->logger != null) $this->logger->log($message, $error);
     }
     
     /**
@@ -876,5 +896,4 @@ class MWSFinancesService_Client implements MWSFinancesService_Interface
     {
         return $dateTime->format(DATE_ISO8601);
     }
-
 }
