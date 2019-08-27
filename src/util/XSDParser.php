@@ -405,7 +405,7 @@ class XSDField {
 
 	protected function copy($field) {
 		$this->type = $field->type;
-		$this->options = $field->options;
+		if(empty($this->options)) $this->options = $field->options;
 		$this->restrictions = $field->restrictions;
 	}
 
