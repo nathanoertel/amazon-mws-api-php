@@ -51,7 +51,7 @@ class CategoryRequest {
 		return $this->parser->getType()->getFields();
 	}
 
-	public function __construct() {
-		$this->parser = new XSDParser('Product');
+	public function __construct($remote = false) {
+		$this->parser = new XSDParser('Product', $remote);
 	}
 }

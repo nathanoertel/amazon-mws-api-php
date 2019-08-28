@@ -15,9 +15,9 @@ class XSDParser {
 		'release_1_9'
 	);
 
-	public function __construct($type) {
+	public function __construct($type, $remote = false) {
 		$this->xsdSrc = dirname(__FILE__).'/../../xsd';
-		$this->parse($type);
+		$this->parse($type, $remote);
 
 		$this->_type = $this->loadTypes($type);
 	}
@@ -144,9 +144,9 @@ class XSDParser {
 		}
 	}
 	
-	public function parse($type) {
+	public function parse($type, $remote = false) {
 		if(!isset($this->_parsed[$type])) {
-			$filename = $this->getFilename($type);
+			$filename = $this->getFilename($type, $remote);
 
 			$doc = new \DOMDocument();
 
@@ -169,34 +169,42 @@ class XSDParser {
 		return true;
 	}
 
-	private function getFilename($type) {
-		if(!is_dir($this->xsdSrc)) mkdir($this->xsdSrc);
-		
-		foreach(self::RELEASES as $release) {
-			$filename= 'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd';
-			$headers = @get_headers($filename);
+	private function getFilename($type, $remote) {
+		if($remote) {
+			if(!is_dir($this->xsdSrc)) mkdir($this->xsdSrc);
+			
+			foreach(self::RELEASES as $release) {
+				$filename= 'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd';
+				$headers = @get_headers($filename);
 
-			if(empty($headers[0])) return $this->getFilename($type);
-			else {
-				if($headers[0] == 'HTTP/1.1 200 OK' || $headers[0] == 'HTTP/1.0 200 OK') {
-					if(!file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) {
-						$try = 0;
+				if(empty($headers[0])) return $this->getFilename($type, $remote);
+				else {
+					if($headers[0] == 'HTTP/1.1 200 OK' || $headers[0] == 'HTTP/1.0 200 OK') {
+						if(!file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) {
+							$try = 0;
 
-						do {
-							$xsd = @file_get_contents($filename);
-							$try++;
-						} while($xsd == false && $try <= 10);
-						
-						if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
-						else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
+							do {
+								$xsd = @file_get_contents($filename);
+								$try++;
+							} while($xsd == false && $try <= 10);
+							
+							if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
+							else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
+						}
+
+						return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
 					}
-
-					return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
 				}
 			}
-		}
 
-		throw new \Exception('Type '.$type.' could not be found. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/{RELEASE}/'.$type.'.xsd'.')');
+			throw new \Exception('Type '.$type.' could not be found. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/{RELEASE}/'.$type.'.xsd'.')');
+		} else {
+			foreach(self::RELEASES as $release) {
+				if(file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
+			}
+
+			return $this->getFilename($type, true);
+		}
 	}
 
 	private function parseNode($node) {
