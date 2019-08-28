@@ -5,7 +5,6 @@ use AmazonMWS\util\XSDParser;
 class CategoryRequest {
 	public function loadCategories() {
 		$categories = array();
-		// error_log('Loading categories');
 		
 		foreach($this->parser->getType()->getFields() as $index => $field) {
 			if(!is_string($field->getType()) && $field->getType()->getIsChoice()) {
@@ -15,14 +14,12 @@ class CategoryRequest {
 						if(!is_string($subsubfield->getType()) && $subsubfield->getType()->getIsChoice()) {
 							foreach($subsubfield->getType()->getFields() as $subsubcat => $subsubsubfield) {
 								$noChoice = false;
-								// error_log($cat.' > '.$subsubcat);
 								$categories[] = array($cat, $subsubcat);
 							}
 						}
 					}
 
 					if($noChoice) {
-						// error_log($cat);
 						$categories[] = array($cat);
 					}
 				}
@@ -35,35 +32,26 @@ class CategoryRequest {
 	public function loadFields($categories) {
 		$fields = array();
  
-		foreach($this->parser->getType()->getFields() as $index => $field) {
-			if(!is_string($field->getType()) && $field->getType()->getIsChoice()) {
-				foreach($field->getType()->getFields() as $cat => $subfield) {
-					if($cat == $categories[0]) {
-						$fields[$cat] = $subfield->getType()->getFields();
+		$type = $this->parser->getType();
 
-						if(count($categories) > 1) {
-							foreach($subfield->getType()->getFields() as $subcat => $subsubfield) {
-								if(!is_string($subsubfield->getType()) && $subsubfield->getType()->getIsChoice()) {
-									foreach($subsubfield->getType()->getFields() as $subsubcat => $subsubsubfield) {
-										if($subsubcat == $categories[1]) {
-											$fields[$subsubcat] = $subsubfield->getType()->getFields();
-											break;
-										}
-									}
-								}
-							}
-						}
+		while(count($categories)) {
+			$category = array_shift($categories);
 
+			if(!is_string($type)) {
+				foreach($type->getFields() as $index => $field) {
+					if(!is_string($field->getType()) && $field->getType()->getIsChoice()) {
+						$field->getType()->setChoice($category);
+						$type = $field->getType()->getFields()[$category]->getType();
 						break;
 					}
 				}
 			}
 		}
 
-		return $fields;
+		return $this->parser->getType()->getFields();
 	}
 
-	public function __construct() {
-		$this->parser = new XSDParser('Product');
+	public function __construct($remote = false) {
+		$this->parser = new XSDParser('Product', $remote);
 	}
 }

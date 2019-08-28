@@ -15,9 +15,9 @@ class XSDParser {
 		'release_1_9'
 	);
 
-	public function __construct($type) {
+	public function __construct($type, $remote = false) {
 		$this->xsdSrc = dirname(__FILE__).'/../../xsd';
-		$this->parse($type);
+		$this->parse($type, $remote);
 
 		$this->_type = $this->loadTypes($type);
 	}
@@ -28,123 +28,125 @@ class XSDParser {
 
     private function loadTypes($index, $path = array()) {
         if(!isset($this->_types[$index])) throw new \Exception('Type '.$index.' not found');
-        
+		
         if($this->_types[$index] instanceof XSDType) {
-            foreach($this->_types[$index]->getFields() as $key => $field) {
-				if(is_string($field->getType())) {
-					$name = $path;
-					$name[] = $field->getName();
-					$type = explode(':', $field->getType());
+            foreach($this->_types[$index]->getFields(false) as $key => $field) {
+				$this->loadSubtypes($field);
+				// if(is_string($field->getType())) {
+				// 	$name = $path;
+				// 	$name[] = $field->getName();
+				// 	$type = explode(':', $field->getType());
 
-					if(count($type) > 1) {
-						if(count($type) > 2) {
-							if($type[1] === 'union') {
-								$types = explode('|', $type[2]);
+				// 	if(count($type) > 1) {
+				// 		if(count($type) > 2) {
+				// 			if($type[1] === 'union') {
+				// 				$types = explode('|', $type[2]);
 
-								foreach($types as $t) {
-									$field->setType($this->loadTypes($t, $name));
-								}
-							}
-						} else {
-							$field->setType($this->loadTypes($type[1], $name));
-						}
-					} else {
-						if($type[0] == 'sub-type') {
-							foreach($field->getOptions() as $option) {
-								$this->_types[$index]->addField($option['value'], $this->loadTypes($option['value'], array_merge($name, array($option['name']))));
-							}
-						}
-					}
-				} else if($field->getType() instanceof XSDType) {
-					foreach($field->getType()->getFields() as $key => $field) {
-						if(is_string($field->getType())) {
-							$name = $path;
-							$name[] = $field->getName();
-							$type = explode(':', $field->getType());
+				// 				foreach($types as $t) {
+				// 					$field->setType($this->loadTypes($t, $name));
+				// 				}
+				// 			}
+				// 		} else {
+				// 			$field->setType($this->loadTypes($type[1], $name));
+				// 		}
+				// 	}
+				// } else if($field->getType() instanceof XSDType) {
+				// 	foreach($field->getType()->getFields(false) as $key => $field) {
+				// 		if(is_string($field->getType())) {
+				// 			$name = $path;
+				// 			$name[] = $field->getName();
+				// 			$type = explode(':', $field->getType());
 
-							if(count($type) > 1) {
-								if(count($type) > 2) {
-									if($type[1] === 'union') {
-										$types = explode('|', $type[2]);
+				// 			if(count($type) > 1) {
+				// 				if(count($type) > 2) {
+				// 					if($type[1] === 'union') {
+				// 						$types = explode('|', $type[2]);
 
-										foreach($types as $t) {
-											$field->setType($this->loadTypes($t, $name));
-										}
-									}
-								} else {
-									$field->setType($this->loadTypes($type[1], $name));
-								}
-							} else {
-								if($type[0] == 'sub-type') {
-									foreach($field->getOptions() as $option) {
-										$this->_types[$index]->addField($option['value'], $this->loadTypes($option['value'], array_merge($name, array($option['name']))));
-									}
-								}
-							}
-						}
-					}
-				}
+				// 						foreach($types as $t) {
+				// 							$field->setType($this->loadTypes($t, $name));
+				// 						}
+				// 					}
+				// 				} else {
+				// 					$field->setType($this->loadTypes($type[1], $name));
+				// 				}
+				// 			}
+				// 		}
+				// 	}
+				// }
             }
         } else if($this->_types[$index] instanceof XSDField) {
-			if(is_string($this->_types[$index]->getType())) {
-				$type = explode(':', $this->_types[$index]->getType());
+			$this->loadSubtypes($this->_types[$index]);
+			// if(is_string($this->_types[$index]->getType())) {
+			// 	$type = explode(':', $this->_types[$index]->getType());
 
-				if(count($type) > 1) {
-					if(count($type) > 2) {
-						if($type[1] === 'union') {
-							$types = explode('|', $type[2]);
+			// 	if(count($type) > 1) {
+			// 		if(count($type) > 2) {
+			// 			if($type[1] === 'union') {
+			// 				$types = explode('|', $type[2]);
 
-							foreach($types as $t) {
-								$this->_types[$index]->setType($this->loadTypes($t, $path));
-							}
-						}
-					} else {
-						$this->_types[$index]->setType($this->loadTypes($type[1], $path));
-					}
-				} else {
-					if($type[0] == 'sub-type') {
-						foreach($this->_types[$index]->getOptions() as $option) {
-							$this->_types[$index]->setType($this->loadTypes($option['value'], array_merge($path, array($option['value']))));
-						}
-					}
-				}
-			} else if($this->_types[$index]->getType() instanceof XSDType) {
-				foreach($this->_types[$index]->getType()->getFields() as $key => $field) {
-					if(is_string($field->getType())) {
-						$name = $path;
-						$name[] = $field->getName();
-						$type = explode(':', $field->getType());
+			// 				foreach($types as $t) {
+			// 					$this->_types[$index]->setType($this->loadTypes($t, $path));
+			// 				}
+			// 			}
+			// 		} else {
+			// 			$this->_types[$index]->setType($this->loadTypes($type[1], $path));
+			// 		}
+			// 	}
+			// } else if($this->_types[$index]->getType() instanceof XSDType) {
+			// 	foreach($this->_types[$index]->getType()->getFields(false) as $key => $field) {
+			// 		if(is_string($field->getType())) {
+			// 			$name = $path;
+			// 			$name[] = $field->getName();
+			// 			$type = explode(':', $field->getType());
 
-						if(count($type) > 1) {
-							if(count($type) > 2) {
-								if($type[1] === 'union') {
-									$types = explode('|', $type[2]);
+			// 			if(count($type) > 1) {
+			// 				if(count($type) > 2) {
+			// 					if($type[1] === 'union') {
+			// 						$types = explode('|', $type[2]);
 
-									foreach($types as $t) {
-										$field->setType($this->loadTypes($t, $name));
-									}
-								}
-							} else {
-								$field->setType($this->loadTypes($type[1], $name));
-							}
-						} else {
-							if($type[0] == 'sub-type') {
-								foreach($field->getOptions() as $option) {
-									$this->_types[$index]->addField($option['value'], $this->loadTypes($option['value'], array_merge($name, array($option['name']))));
-								}
-							}
-						}
-					}
-				}
-			}
+			// 						foreach($types as $t) {
+			// 							$field->setType($this->loadTypes($t, $name));
+			// 						}
+			// 					}
+			// 				} else {
+			// 					$field->setType($this->loadTypes($type[1], $name));
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
 		} else throw new \Exception('Type '.$index.' is invalid '.get_class($this->_types));
 		
 		return $this->_types[$index];
-    }
+	}
 	
-	public function parse($type) {
+	private function loadSubtypes($field) {
+		if(is_string($field->getType())) {
+			$type = explode(':', $field->getType());
+
+			if(count($type) > 1) {
+				if(count($type) > 2) {
+					if($type[1] === 'union') {
+						$types = explode('|', $type[2]);
+
+						foreach($types as $t) {
+							$field->setType($this->loadTypes($t));
+						}
+					}
+				} else {
+					$field->setType($this->loadTypes($type[1]));
+				}
+			}
+		} else {
+			foreach($field->getType()->getFields(false) as $key => $field) {
+				$this->loadSubtypes($field);
+			}
+		}
+	}
+	
+	public function parse($type, $remote = false) {
 		if(!isset($this->_parsed[$type])) {
-			$filename = $this->getFilename($type);
+			$filename = $this->getFilename($type, $remote);
 
 			$doc = new \DOMDocument();
 
@@ -167,34 +169,42 @@ class XSDParser {
 		return true;
 	}
 
-	private function getFilename($type) {
-		if(!is_dir($this->xsdSrc)) mkdir($this->xsdSrc);
-		
-		foreach(self::RELEASES as $release) {
-			$filename= 'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd';
-			$headers = @get_headers($filename);
+	private function getFilename($type, $remote) {
+		if($remote) {
+			if(!is_dir($this->xsdSrc)) mkdir($this->xsdSrc);
+			
+			foreach(self::RELEASES as $release) {
+				$filename= 'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd';
+				$headers = @get_headers($filename);
 
-			if(empty($headers[0])) return $this->getFilename($type);
-			else {
-				if($headers[0] == 'HTTP/1.1 200 OK' || $headers[0] == 'HTTP/1.0 200 OK') {
-					if(!file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) {
-						$try = 0;
+				if(empty($headers[0])) return $this->getFilename($type, $remote);
+				else {
+					if($headers[0] == 'HTTP/1.1 200 OK' || $headers[0] == 'HTTP/1.0 200 OK') {
+						if(!file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) {
+							$try = 0;
 
-						do {
-							$xsd = @file_get_contents($filename);
-							$try++;
-						} while($xsd == false && $try <= 10);
-						
-						if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
-						else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
+							do {
+								$xsd = @file_get_contents($filename);
+								$try++;
+							} while($xsd == false && $try <= 10);
+							
+							if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
+							else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
+						}
+
+						return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
 					}
-
-					return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
 				}
 			}
-		}
 
-		throw new \Exception('Type '.$type.' could not be found. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/{RELEASE}/'.$type.'.xsd'.')');
+			throw new \Exception('Type '.$type.' could not be found. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/{RELEASE}/'.$type.'.xsd'.')');
+		} else {
+			foreach(self::RELEASES as $release) {
+				if(file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
+			}
+
+			return $this->getFilename($type, true);
+		}
 	}
 
 	private function parseNode($node) {
@@ -264,6 +274,8 @@ class XSDType {
 
 	private $isChoice;
 
+	private $choice;
+
 	public function getName() {
 		return $this->name;
 	}
@@ -272,8 +284,14 @@ class XSDType {
 		return $this->isChoice;
 	}
 
-	public function getFields() {
-		return $this->_fields;
+	public function setChoice($choice) {
+		$this->choice = $choice;
+	}
+
+	public function getFields($choose = true) {
+		if($this->isChoice && $choose) {
+			return (isset($this->_fields[$this->choice]) ? array($this->choice => $this->_fields[$this->choice]) : array());
+		} else return $this->_fields;
 	}
 
 	public function addField($name, $field) {
@@ -343,23 +361,23 @@ class XSDType {
 }
 
 class XSDField {
-	private $name;
+	protected $name;
 
-	private $required;
+	protected $required;
 
-	private $minOccurs;
+	protected $minOccurs;
 
-	private $maxOccurs;
+	protected $maxOccurs;
 
-	private $type;
+	protected $type;
 
-	private $options;
+	protected $options;
 
-	private $isAttribute;
+	protected $isAttribute;
 
-	private $isArray;
+	protected $isArray;
 
-	private $restrictions = array();
+	protected $restrictions = array();
 
 	public function getName() {
 		return $this->name;
@@ -369,10 +387,34 @@ class XSDField {
 		return $this->type;
 	}
 
+	public function isRequired() {
+		return $this->required;
+	}
+
+	public function isArray() {
+		return $this->isArray;
+	}
+
 	public function setType($type) {
-		if($type instanceof XSDType && $this->type instanceof XSDType) $this->type->mergeType($type);
-		else if($type instanceof XSDField) $this->type = $type->getType();
-		else $this->type = $type;
+		if($type instanceof XSDType && $this->type instanceof XSDType) {
+			$this->type->mergeType($type);
+		} else if($type instanceof XSDField) {
+			if(is_string($type->getType())) {
+				$this->copy($type);
+			} else {
+				if(array_keys($type->getType()->getFields()) == array('')) {
+					$this->copy($type->getType()->getFields()['']);
+				} else {
+					$this->copy($type);
+				}
+			}
+		} else $this->type = $type;
+	}
+
+	protected function copy($field) {
+		$this->type = $field->type;
+		if(empty($this->options)) $this->options = $field->options;
+		$this->restrictions = $field->restrictions;
 	}
 
 	public function getOptions() {
@@ -454,12 +496,23 @@ class XSDField {
 					$ref = $node->attributes->getNamedItem('ref');
 					$name = $node->attributes->getNamedItem('name');
 
-					
 					if($type) {
 						$fields[$path] = new XSDField($path, $type->value, $minOccurs, $maxOccurs, $isAttribute);
 					} else if($ref) $fields[$path] = new XSDField($path, $ref->value, $minOccurs, $maxOccurs, $isAttribute);
 					else {
-						$fields[$path] = new XSDField($path, new XSDType($name->value, $node, $types), $minOccurs, $maxOccurs, $isAttribute);
+						$complex = true;
+
+						foreach($node->childNodes as $childNode) {
+							if($childNode->nodeName === 'xsd:simpleType') {
+								self::parseNode($childNode, $path, $types, $fields, $isAttribute);
+								$complex = false;
+								break;
+							}
+						}
+
+						if($complex) {
+							$fields[$path] = new XSDField($path, new XSDType($name->value, $node, $types), $minOccurs, $maxOccurs, $isAttribute);
+						}
 					}
 					break;
 				case 'xsd:simpleType':
