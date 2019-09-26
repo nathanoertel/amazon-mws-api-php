@@ -109,7 +109,7 @@ abstract class AbstractRequest {
 		if(file_exists($fullPath)) {
 			require_once($fullPath);
 		} else {
-			throw new InvalidTypeException($filename.' is not a valid type');
+			throw new InvalidTypeException($classname.' is not a valid type');
 		}
 	}
 
