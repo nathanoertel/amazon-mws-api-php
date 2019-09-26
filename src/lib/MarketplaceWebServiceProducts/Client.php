@@ -1117,16 +1117,31 @@ class MarketplaceWebServiceProducts_Client implements MarketplaceWebServiceProdu
             curl_close($ch);
             throw new MarketplaceWebServiceProducts_Exception($exProps);
         } else {
-			$this->_log($info['url']);
+			$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+
+			$headers = substr($response, 0, $headerSize);
+			$body = substr($response, $headerSize);
+
+            $this->_log($info['url']);
 			$this->_log($info['http_code']);
 			$this->_log(trim($info['request_header']));
-			$this->_log($query);
-			$this->_log($response);
+            $this->_log($query);
+            $this->_log($headers);
+			$this->_log($this->formatXml($body));
         }
 
         curl_close($ch);
         return $this->_extractHeadersAndBody($response);
     }
+
+	private function formatXml($xml) {
+		$xmlDocument = new \DOMDocument('1.0');
+		$xmlDocument->preserveWhiteSpace = false;
+		$xmlDocument->formatOutput = true;
+		$xmlDocument->loadXML($xml);
+
+		return $xmlDocument->saveXML();
+	}
     
     private function _log($message, $error = false) {
 	    if($this->logger != null) $this->logger->log($message, $error);
