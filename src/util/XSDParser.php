@@ -391,6 +391,10 @@ class XSDField {
 		return $this->required;
 	}
 
+	public function isAttribute() {
+		return $this->isAttribute;
+	}
+
 	public function isArray() {
 		return $this->isArray;
 	}
