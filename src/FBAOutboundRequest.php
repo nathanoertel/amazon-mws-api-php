@@ -7,6 +7,6 @@ class FBAOutboundRequest extends AbstractRequest {
 	}
 
 	public function getURL() {
-		return 'http://mws.amazonservices.jp/FulfillmentOutboundShipment/2010-10-01';
+		return 'https://mws.amazonservices.com/FulfillmentOutboundShipment/2010-10-01';
 	}
 }
