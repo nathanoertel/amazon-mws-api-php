@@ -425,6 +425,10 @@ class XSDField {
 		return $this->options;
 	}
 
+	public function getRestrictions() {
+		return $this->restrictions;
+	}
+
 	public static function loadFields($node, &$types, &$fields) {
 		$name = $node->attributes->getNamedItem('name');
 		$ref = $node->attributes->getNamedItem('ref');
