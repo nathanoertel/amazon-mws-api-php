@@ -160,7 +160,7 @@ class XSDParser {
 			$doc->loadXML($xsd);
 
 			foreach($doc->childNodes as $childNode) {
-				$this->parseNode($childNode);
+				$this->parseNode($childNode, $remote);
 			}
 
 			$this->_parsed[$type] = true;
@@ -180,17 +180,15 @@ class XSDParser {
 				if(empty($headers[0])) return $this->getFilename($type, $remote);
 				else {
 					if($headers[0] == 'HTTP/1.1 200 OK' || $headers[0] == 'HTTP/1.0 200 OK') {
-						if(!file_exists($this->xsdSrc.'/'.$release.'-'.$type.'.xsd')) {
-							$try = 0;
+						$try = 0;
 
-							do {
-								$xsd = @file_get_contents($filename);
-								$try++;
-							} while($xsd == false && $try <= 10);
-							
-							if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
-							else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
-						}
+						do {
+							$xsd = @file_get_contents($filename);
+							$try++;
+						} while($xsd == false && $try <= 10);
+						
+						if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
+						else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
 
 						return $this->xsdSrc.'/'.$release.'-'.$type.'.xsd';
 					}
@@ -207,17 +205,17 @@ class XSDParser {
 		}
 	}
 
-	private function parseNode($node) {
+	private function parseNode($node, $remote = false) {
 		switch($node->nodeName) {
 			case 'xsd:schema':
 				foreach($node->childNodes as $childNode) {
-					$this->parseNode($childNode);
+					$this->parseNode($childNode, $remote);
 				}
 				break;
 			case 'xsd:include':
 				try {
 					$name = str_replace('.xsd', '', $node->attributes->getNamedItem('schemaLocation')->value);
-					$this->parse($name);
+					$this->parse($name, $remote);
 				} catch(\Exception $e) {
 					error_log($e->getMessage());
 				}
