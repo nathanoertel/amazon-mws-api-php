@@ -8,11 +8,11 @@ class CategoryRequest {
 		
 		foreach($this->parser->getType()->getFields() as $index => $field) {
 			if(!is_string($field->getType()) && $field->getType()->getIsChoice()) {
-				foreach($field->getType()->getFields() as $cat => $subfield) {
+				foreach($field->getType()->getFields(false) as $cat => $subfield) {
 					$noChoice = true;
 					foreach($subfield->getType()->getFields() as $subcat => $subsubfield) {
 						if(!is_string($subsubfield->getType()) && $subsubfield->getType()->getIsChoice()) {
-							foreach($subsubfield->getType()->getFields() as $subsubcat => $subsubsubfield) {
+							foreach($subsubfield->getType()->getFields(false) as $subsubcat => $subsubsubfield) {
 								$noChoice = false;
 								$categories[] = array($cat, $subsubcat);
 							}
