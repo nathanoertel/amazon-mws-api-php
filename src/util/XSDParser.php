@@ -180,12 +180,18 @@ class XSDParser {
 				if(empty($headers[0])) return $this->getFilename($type, $remote);
 				else {
 					if($headers[0] == 'HTTP/1.1 200 OK' || $headers[0] == 'HTTP/1.0 200 OK') {
-						$try = 0;
+            $try = 0;
 
 						do {
 							$xsd = @file_get_contents($filename);
 							$try++;
-						} while($xsd == false && $try <= 10);
+            } while($xsd == false && $try <= 10);
+            
+            foreach($headers as $header) {
+              if(strpos($header, 'Content-Encoding: gzip') !== false) {
+                $xsd = gzdecode($xsd);
+              }
+            }
 						
 						if($xsd) file_put_contents($this->xsdSrc.'/'.$release.'-'.$type.'.xsd', $xsd);
 						else throw new \Exception('Type '.$type.' could not be loaded. ('.'https://images-na.ssl-images-amazon.com/images/G/01/rainier/help/xsd/'.$release.'/'.$type.'.xsd'.')');
