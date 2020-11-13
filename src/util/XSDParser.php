@@ -145,7 +145,8 @@ class XSDParser {
 	}
 	
 	public function parse($type, $remote = false) {
-		if(!isset($this->_parsed[$type])) {
+    $parsed = isset($this->_parsed[$type]);
+		if(!$parsed) {
 			$filename = $this->getFilename($type, $remote);
 
 			$doc = new \DOMDocument();
@@ -157,16 +158,21 @@ class XSDParser {
 				$try++;
 			} while($xsd == false && $try <= 10);
 
-			$doc->loadXML($xsd);
+			$loaded = $doc->loadXML($xsd);
 
-			foreach($doc->childNodes as $childNode) {
-				$this->parseNode($childNode, $remote);
-			}
+      if($loaded === false && $remote === false) {
+        $parsed = $this->parse($type, true);
+      } else {
+        foreach($doc->childNodes as $childNode) {
+          $this->parseNode($childNode, $remote);
+        }
 
-			$this->_parsed[$type] = true;
+        $this->_parsed[$type] = true;
+        $parsed = true;
+      }
 		}
 
-		return true;
+		return $parsed;
 	}
 
 	private function getFilename($type, $remote) {
@@ -190,6 +196,7 @@ class XSDParser {
             foreach($headers as $header) {
               if(strpos($header, 'Content-Encoding: gzip') !== false) {
                 $xsd = gzdecode($xsd);
+                break;
               }
             }
 						
