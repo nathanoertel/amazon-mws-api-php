@@ -4,7 +4,21 @@ namespace AmazonMWS;
 use AmazonMWS\util\Array2XML;
 
 class MWSRequest extends AbstractRequest {
-	public function getReport($reportId) {
+	public function getReportFile($reportId) {
+		$fileHandle = @fopen('php://memory', 'rw+');
+		$request = array(
+			'Report' => $fileHandle,
+			'ReportId' => $reportId
+		);
+
+		$response = $this->request('getReport', $request);
+		
+		rewind($fileHandle);
+    
+    return $fileHandle;
+	}
+
+	public function getReport($reportId, $asXML = true) {
 		$fileHandle = @fopen('php://memory', 'rw+');
 		$request = array(
 			'Report' => $fileHandle,
@@ -18,12 +32,14 @@ class MWSRequest extends AbstractRequest {
 		$responseStr = stream_get_contents($fileHandle);
 		
 		$this->log($responseStr);
-		
-		$responseXML = new \SimpleXMLElement($responseStr);
+    
+    if($asXML) {
+      $result = new \SimpleXMLElement($responseStr);
+    } else $result = $responseStr;
 
 		@fclose($fileHandle);
 
-		return $responseXML;
+		return $result;
 	}
 
 	public function submitFeed($feedType, $messageType, $messages, $feedRequest = array()) {
