@@ -30,7 +30,7 @@
  *       $xml = Array2XML::createXML('root_node_name', $php_array);
  *       echo $xml->saveXML();
  */
-namespace AmazonMWS\model;
+namespace AmazonMWS\util;
 
 class Array2XML {
 
