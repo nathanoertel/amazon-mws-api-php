@@ -26,95 +26,15 @@ class XSDParser {
 		return $this->_type;
 	}
 
-    private function loadTypes($index, $path = array()) {
-        if(!isset($this->_types[$index])) throw new \Exception('Type '.$index.' not found');
+	private function loadTypes($index, $path = array()) {
+		if(!isset($this->_types[$index])) throw new \Exception('Type '.$index.' not found');
 		
-        if($this->_types[$index] instanceof XSDType) {
-            foreach($this->_types[$index]->getFields(false) as $key => $field) {
+		if($this->_types[$index] instanceof XSDType) {
+			foreach($this->_types[$index]->getFields(false) as $key => $field) {
 				$this->loadSubtypes($field);
-				// if(is_string($field->getType())) {
-				// 	$name = $path;
-				// 	$name[] = $field->getName();
-				// 	$type = explode(':', $field->getType());
-
-				// 	if(count($type) > 1) {
-				// 		if(count($type) > 2) {
-				// 			if($type[1] === 'union') {
-				// 				$types = explode('|', $type[2]);
-
-				// 				foreach($types as $t) {
-				// 					$field->setType($this->loadTypes($t, $name));
-				// 				}
-				// 			}
-				// 		} else {
-				// 			$field->setType($this->loadTypes($type[1], $name));
-				// 		}
-				// 	}
-				// } else if($field->getType() instanceof XSDType) {
-				// 	foreach($field->getType()->getFields(false) as $key => $field) {
-				// 		if(is_string($field->getType())) {
-				// 			$name = $path;
-				// 			$name[] = $field->getName();
-				// 			$type = explode(':', $field->getType());
-
-				// 			if(count($type) > 1) {
-				// 				if(count($type) > 2) {
-				// 					if($type[1] === 'union') {
-				// 						$types = explode('|', $type[2]);
-
-				// 						foreach($types as $t) {
-				// 							$field->setType($this->loadTypes($t, $name));
-				// 						}
-				// 					}
-				// 				} else {
-				// 					$field->setType($this->loadTypes($type[1], $name));
-				// 				}
-				// 			}
-				// 		}
-				// 	}
-				// }
-            }
-        } else if($this->_types[$index] instanceof XSDField) {
+			}
+		} else if($this->_types[$index] instanceof XSDField) {
 			$this->loadSubtypes($this->_types[$index]);
-			// if(is_string($this->_types[$index]->getType())) {
-			// 	$type = explode(':', $this->_types[$index]->getType());
-
-			// 	if(count($type) > 1) {
-			// 		if(count($type) > 2) {
-			// 			if($type[1] === 'union') {
-			// 				$types = explode('|', $type[2]);
-
-			// 				foreach($types as $t) {
-			// 					$this->_types[$index]->setType($this->loadTypes($t, $path));
-			// 				}
-			// 			}
-			// 		} else {
-			// 			$this->_types[$index]->setType($this->loadTypes($type[1], $path));
-			// 		}
-			// 	}
-			// } else if($this->_types[$index]->getType() instanceof XSDType) {
-			// 	foreach($this->_types[$index]->getType()->getFields(false) as $key => $field) {
-			// 		if(is_string($field->getType())) {
-			// 			$name = $path;
-			// 			$name[] = $field->getName();
-			// 			$type = explode(':', $field->getType());
-
-			// 			if(count($type) > 1) {
-			// 				if(count($type) > 2) {
-			// 					if($type[1] === 'union') {
-			// 						$types = explode('|', $type[2]);
-
-			// 						foreach($types as $t) {
-			// 							$field->setType($this->loadTypes($t, $name));
-			// 						}
-			// 					}
-			// 				} else {
-			// 					$field->setType($this->loadTypes($type[1], $name));
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
 		} else throw new \Exception('Type '.$index.' is invalid '.get_class($this->_types));
 		
 		return $this->_types[$index];
@@ -592,7 +512,15 @@ class XSDField {
 					}
 					break;
 				case 'xsd:union':
-					$fields[$path] = new XSDField($path, 'union:'.implode('|', explode(' ', $node->attributes->getNamedItem('memberTypes')->value)), $minOccurs, $maxOccurs, $isAttribute);
+					$memberTypes = $node->attributes->getNamedItem('memberTypes');
+					
+					if($memberTypes) {
+						$fields[$path] = new XSDField($path, 'union:'.implode('|', explode(' ', $node->attributes->getNamedItem('memberTypes')->value)), $minOccurs, $maxOccurs, $isAttribute);
+					} else {
+						foreach($node->childNodes as $childNode) {
+							self::parseNode($childNode, $path, $types, $fields, $isAttribute);
+						}
+					}
 					break;
 				case 'xsd:length':
 				case 'xsd:minLength':
