@@ -95,12 +95,14 @@ abstract class AbstractRequest {
 	public abstract function getURL();
 
 	public function setLogger($type, $arguments = array()) {
-		$path = $this->getPath();
-		$clientName = $path.'_Logger_'.$type;
-		$this->requireFile($clientName);
-		$class = new \ReflectionClass($clientName);
-		if(empty($arguments)) $this->logger = $class->newInstance();
-		else $this->logger = $class->newInstanceArgs($arguments);
+		if (is_string($type)) {
+			$path = $this->getPath();
+			$clientName = $path.'_Logger_'.$type;
+			$this->requireFile($clientName);
+			$class = new \ReflectionClass($clientName);
+			if(empty($arguments)) $this->logger = $class->newInstance();
+			else $this->logger = $class->newInstanceArgs($arguments);
+		} else $this->logger = $type;
 	}
 
 	private function requireFile($classname) {
